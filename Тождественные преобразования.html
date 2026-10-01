@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сложение и вычитание алгебраических дробей</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+  body { background:linear-gradient(135deg,#1a0a3e 0%,#3a1a7a 45%,#6a3ab8 100%); color:#fff; }
+
+  .slide { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:flex-start; padding:75px 5vw 90px; text-align:center; overflow-y:auto; scroll-padding-top:75px; }
+  .slide.active { display:flex; animation:fadein .45s ease; }
+  @keyframes fadein { from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:none;} }
+
+  .slide-num { position:absolute; top:16px; right:20px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:5px 13px; border-radius:999px; font-size:12px; font-weight:600; }
+  .topic-badge { position:absolute; top:16px; left:50%; transform:translateX(-50%); background:rgba(255,220,120,.2); border:1px solid #ffdc78; color:#ffdc78; padding:5px 16px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:1px; white-space:nowrap; }
+
+  h1 { font-size:clamp(24px,3.6vw,44px); line-height:1.15; margin-bottom:16px; text-shadow:0 4px 24px rgba(0,0,0,.4); }
+  h1 .grad { background:linear-gradient(90deg,#ffdc78,#7ef9ff,#ff9de2); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h2 { font-size:clamp(20px,2.7vw,32px); margin-bottom:12px; text-shadow:0 3px 16px rgba(0,0,0,.3); }
+  h3 { font-size:clamp(16px,1.9vw,23px); margin-bottom:8px; color:#ffdc78; }
+
+  p, li { font-size:clamp(14px,1.7vw,20px); line-height:1.55; }
+  ul { list-style:none; text-align:left; max-width:920px; }
+  li { margin:6px 0; padding-left:30px; position:relative; }
+  li::before { content:'✦'; position:absolute; left:0; color:#ffdc78; }
+
+  .card { background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.25); border-radius:20px; padding:18px 28px; max-width:1000px; margin-bottom:12px; box-shadow:0 16px 44px rgba(0,0,0,.3); }
+  .card-left { text-align:left; }
+  .emoji-big { font-size:clamp(38px,5vw,66px); margin-bottom:8px; display:block; }
+
+  /* ДРОБИ СТОЛБИКОМ */
+  .fr { display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; margin:0 .3em; line-height:1.2; }
+  .fr .n { padding:0 .5em .08em; border-bottom:2.5px solid #ffdc78; font-weight:700; white-space:nowrap; }
+  .fr .d { padding:.08em .5em 0; font-weight:700; white-space:nowrap; }
+  .fr-big .n { border-bottom-width:3.5px; }
+  .fr-big .n, .fr-big .d { font-size:clamp(17px,2.1vw,26px); }
+
+  .hl { color:#ffdc78; font-weight:800; }
+  .cyan { color:#7ef9ff; font-weight:800; }
+  .green { color:#a8f0c0; font-weight:800; }
+  .pink { color:#ffb0d8; font-weight:800; }
+  .strike { text-decoration:line-through; text-decoration-thickness:3px; text-decoration-color:#ff7ab8; opacity:.7; }
+
+  .step { position:relative; padding:10px 16px 10px 58px; margin:7px 0; background:rgba(255,255,255,.09); border-radius:14px; border:1px solid rgba(255,255,255,.2); font-size:clamp(14px,1.7vw,20px); text-align:left; line-height:1.5; }
+  .step b { color:#7ef9ff; }
+  .step::before { content:counter(st); counter-increment:st; position:absolute; left:12px; top:50%; transform:translateY(-50%); width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#ffdc78,#6a3ab8); color:#1a0a3e; font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; }
+  .steps { counter-reset:st; }
+
+  .task { background:rgba(255,255,255,.12); border-radius:14px; padding:12px 20px; margin:7px 0; font-size:clamp(14px,1.8vw,21px); font-weight:600; border-left:6px solid #7ef9ff; text-align:left; }
+  .task-hard { border-left-color:#ff9de2; }
+  .task-extra { border-left-color:#a8f0c0; }
+  .answers { display:none; margin-top:10px; background:rgba(126,249,255,.12); border:2px solid #7ef9ff; border-radius:16px; padding:14px 20px; font-size:clamp(14px,1.7vw,20px); text-align:left; line-height:1.9; }
+  .answers.open { display:block; animation:fadein .3s ease; }
+  .ans-btn { margin-top:10px; background:linear-gradient(135deg,#ffdc78,#ff9de2); color:#1a0a3e; border:none; font-weight:900; font-size:16px; padding:10px 26px; border-radius:999px; cursor:pointer; transition:transform .15s; box-shadow:0 8px 22px rgba(0,0,0,.3); }
+  .ans-btn:hover { transform:scale(1.05); }
+
+  .badge { display:inline-block; background:rgba(255,220,120,.18); border:1px solid #ffdc78; color:#ffdc78; padding:4px 13px; border-radius:999px; font-weight:800; font-size:13px; margin:3px 4px; }
+  .warn { background:rgba(255,120,160,.15); border:2px solid #ff7ab8; border-radius:14px; padding:11px 18px; font-size:clamp(14px,1.7vw,19px); margin-top:10px; text-align:left; }
+  .tip { background:rgba(168,240,192,.12); border:2px solid #a8f0c0; border-radius:14px; padding:11px 18px; font-size:clamp(14px,1.7vw,19px); margin-top:10px; text-align:left; }
+  .info { background:rgba(126,249,255,.1); border:2px solid #7ef9ff; border-radius:14px; padding:11px 18px; font-size:clamp(14px,1.7vw,19px); margin-top:10px; text-align:left; }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:1000px; width:100%; }
+  @media (max-width:700px){ .grid2 { grid-template-columns:1fr; } }
+  .mini-card { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:14px 18px; text-align:left; font-size:clamp(13px,1.6vw,18px); line-height:1.5; }
+  .mini-card h4 { color:#ffdc78; margin-bottom:6px; font-size:clamp(15px,1.8vw,20px); }
+
+  .compare { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:1000px; width:100%; }
+  @media (max-width:700px){ .compare { grid-template-columns:1fr; } }
+  .compare .no { background:rgba(255,120,160,.12); border:2px solid #ff7ab8; border-radius:14px; padding:14px 18px; text-align:left; }
+  .compare .yes { background:rgba(168,240,192,.12); border:2px solid #a8f0c0; border-radius:14px; padding:14px 18px; text-align:left; }
+
+  .bar-wrap { position:fixed; bottom:0; left:0; right:0; height:6px; background:rgba(255,255,255,.15); z-index:20; }
+  #bar { height:100%; width:0; background:linear-gradient(90deg,#ffdc78,#7ef9ff,#ff9de2); transition:width .3s; }
+  .nav { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:21; align-items:center; }
+  .nav button { width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:19px; cursor:pointer; border:1px solid rgba(255,255,255,.4); transition:transform .15s, background .15s; }
+  .nav button:hover { background:rgba(255,255,255,.35); transform:scale(1.08); }
+  #counter { font-weight:800; font-size:14px; min-width:70px; text-align:center; }
+  .hint { position:fixed; bottom:18px; right:20px; font-size:12px; opacity:.6; z-index:21; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 1. ТИТУЛ ==================== -->
+<section class="slide active">
+  <span class="slide-num">1</span>
+  <span class="emoji-big">➕➖</span>
+  <h1>Сложение и вычитание <span class="grad">алгебраических дробей</span></h1>
+  <p style="max-width:820px;">От простого к сложному: разбираем правила, алгоритмы и тренируемся на задачах трёх уровней.</p>
+  <div style="margin-top:22px;">
+    <span class="badge">8 класс</span>
+    <span class="badge">теория + практика</span>
+    <span class="badge">с ответами</span>
+  </div>
+</section>
+
+<!-- ==================== 2. ЧТО ТАКОЕ АЛГЕБРАИЧЕСКАЯ ДРОБЬ ==================== -->
+<section class="slide">
+  <span class="slide-num">2</span>
+  <span class="topic-badge">ПОВТОРЕНИЕ</span>
+  <h2>📘 Что такое алгебраическая дробь</h2>
+  <div class="card card-left">
+    <p>Это выражение вида
+      <span class="fr"><span class="n">A</span><span class="d">B</span></span>,
+      где A и B — многочлены, причём B ≠ 0.</p>
+    <p style="margin-top:10px; text-align:center;">
+      <span class="fr fr-big"><span class="n">x + 3</span><span class="d">x − 5</span></span>
+      &nbsp;&nbsp;
+      <span class="fr fr-big"><span class="n">a² − 4</span><span class="d">a + 2</span></span>
+      &nbsp;&nbsp;
+      <span class="fr fr-big"><span class="n">2m</span><span class="d">m² + 1</span></span>
+    </p>
+  </div>
+  <div class="tip">💡 Правила сложения и вычитания дробей — те же, что и для обыкновенных дробей. Только с буквами.</div>
+</section>
+
+<!-- ==================== 3. ВСПОМНИМ ОБЫКНОВЕННЫЕ ДРОБИ ==================== -->
+<section class="slide">
+  <span class="slide-num">3</span>
+  <span class="topic-badge">ВСПОМИНАЕМ</span>
+  <h2>🔢 Как было с числами</h2>
+  <div class="card card-left">
+    <h3>Одинаковый знаменатель</h3>
+    <p style="margin-top:8px; text-align:center;">
+      <span class="fr fr-big"><span class="n">2</span><span class="d">7</span></span>
+      +
+      <span class="fr fr-big"><span class="n">3</span><span class="d">7</span></span>
+      =
+      <span class="fr fr-big"><span class="n">5</span><span class="d">7</span></span>
+    </p>
+  </div>
+  <div class="card card-left">
+    <h3>Разные знаменатели</h3>
+    <p style="margin-top:8px; text-align:center;">
+      <span class="fr fr-big"><span class="n">1</span><span class="d">2</span></span>
+      +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">3</span></span>
+      =
+      <span class="fr fr-big"><span class="n">3</span><span class="d">6</span></span>
+      +
+      <span class="fr fr-big"><span class="n">2</span><span class="d">6</span></span>
+      =
+      <span class="fr fr-big"><span class="n">5</span><span class="d">6</span></span>
+    </p>
+  </div>
+  <div class="info">📌 С алгебраическими дробями мы будем делать то же самое — приводить к общему знаменателю и складывать числители.</div>
+</section>
+
+<!-- ==================== 4. ПРАВИЛО 1. ОДИНАКОВЫЙ ЗНАМЕНАТЕЛЬ ==================== -->
+<section class="slide">
+  <span class="slide-num">4</span>
+  <span class="topic-badge">ПРАВИЛО · ОДИНАКОВЫЙ ЗНАМЕНАТЕЛЬ</span>
+  <h2>➕ Сложение с одинаковым знаменателем</h2>
+  <div class="card card-left">
+    <p>Если знаменатели одинаковые, складываем (или вычитаем) только <b>числители</b>, а знаменатель оставляем без изменений:</p>
+    <p style="margin-top:12px; text-align:center;">
+      <span class="fr fr-big"><span class="n">A</span><span class="d">C</span></span>
+      +
+      <span class="fr fr-big"><span class="n">B</span><span class="d">C</span></span>
+      =
+      <span class="fr fr-big"><span class="n">A + B</span><span class="d">C</span></span>
+    </p>
+    <p style="margin-top:10px; text-align:center;">
+      <span class="fr fr-big"><span class="n">A</span><span class="d">C</span></span>
+      −
+      <span class="fr fr-big"><span class="n">B</span><span class="d">C</span></span>
+      =
+      <span class="fr fr-big"><span class="n">A − B</span><span class="d">C</span></span>
+    </p>
+  </div>
+  <div class="warn">⚠️ Знаменатель НЕ складываем! Он остаётся прежним.</div>
+</section>
+
+<!-- ==================== 5. ПРИМЕР 1 - ОДИНАКОВЫЙ ЗНАМЕНАТЕЛЬ ==================== -->
+<section class="slide">
+  <span class="slide-num">5</span>
+  <span class="topic-badge">ЛЁГКИЙ УРОВЕНЬ</span>
+  <h2>🌸 Пример 1: плюс с одинаковым знаменателем</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(17px,2vw,24px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">3x</span><span class="d">x + 2</span></span>
+      +
+      <span class="fr fr-big"><span class="n">2x</span><span class="d">x + 2</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Знаменатели одинаковые</b> — (x + 2). Значит, работаем с числителями.</div>
+      <div class="step"><b>Складываем числители:</b> 3x + 2x = 5x.</div>
+      <div class="step"><b>Знаменатель сохраняем:</b> (x + 2).</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">5x</span><span class="d">x + 2</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">💡 ОДЗ: x ≠ −2 (знаменатель не должен быть нулём).</div>
+</section>
+
+<!-- ==================== 6. ПРИМЕР 2 - МИНУС С ОДИНАКОВЫМ ЗНАМЕНАТЕЛЕМ ==================== -->
+<section class="slide">
+  <span class="slide-num">6</span>
+  <span class="topic-badge">ЛЁГКИЙ УРОВЕНЬ</span>
+  <h2>🌸 Пример 2: минус с одинаковым знаменателем</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(17px,2vw,24px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">5a</span><span class="d">a − 3</span></span>
+      −
+      <span class="fr fr-big"><span class="n">2a</span><span class="d">a − 3</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Знаменатели одинаковые.</b></div>
+      <div class="step"><b>Вычитаем числители:</b> 5a − 2a = 3a.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">3a</span><span class="d">a − 3</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="warn">⚠️ Если в числителе после вычитания получается многочлен из нескольких членов — обязательно бери его в скобки!</div>
+</section>
+
+<!-- ==================== 7. ВАЖНОЕ ПРАВИЛО ПРО СКОБКИ ==================== -->
+<section class="slide">
+  <span class="slide-num">7</span>
+  <span class="topic-badge">ВАЖНО</span>
+  <h2>⚠️ Зачем нужны скобки при вычитании</h2>
+  <div class="compare">
+    <div class="no">
+      <h3 style="color:#ffb0d8;">❌ Ошибка</h3>
+      <p style="margin-top:8px;">Пишут:
+        <span class="fr"><span class="n">x + 3</span><span class="d">x − 1</span></span> −
+        <span class="fr"><span class="n">x − 2</span><span class="d">x − 1</span></span> =
+        <span class="fr"><span class="n">x + 3 − x − 2</span><span class="d">x − 1</span></span>
+      </p>
+      <p style="margin-top:8px; font-size:clamp(13px,1.6vw,18px);">Минус перед дробью относится ко ВСЕМУ числителю, а не только к первому слагаемому.</p>
+    </div>
+    <div class="yes">
+      <h3 style="color:#a8f0c0;">✅ Правильно</h3>
+      <p style="margin-top:8px;">Берём в скобки:
+        <span class="fr"><span class="n">x + 3 − (x − 2)</span><span class="d">x − 1</span></span>
+      </p>
+      <p style="margin-top:8px;">= <span class="fr"><span class="n">x + 3 − x + 2</span><span class="d">x − 1</span></span>
+        = <span class="fr"><span class="n">5</span><span class="d">x − 1</span></span>
+      </p>
+    </div>
+  </div>
+  <div class="warn">⚠️ Правило: если после дроби стоит минус, а в числителе два и более слагаемых — ВСЕГДА ставь скобки и раскрывай их с изменением знаков.</div>
+</section>
+
+<!-- ==================== 8. ПРИМЕР 3 - СО СКОБКАМИ ==================== -->
+<section class="slide">
+  <span class="slide-num">8</span>
+  <span class="topic-badge">СРЕДНИЙ УРОВЕНЬ</span>
+  <h2>🌺 Пример 3: вычитание со скобками</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(16px,1.9vw,23px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">x + 5</span><span class="d">x − 2</span></span>
+      −
+      <span class="fr fr-big"><span class="n">x + 1</span><span class="d">x − 2</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Знаменатели одинаковые</b> — оставляем.</div>
+      <div class="step"><b>Числитель берём в скобки:</b>
+        <span class="fr"><span class="n">(x + 5) − (x + 1)</span><span class="d">x − 2</span></span>
+      </div>
+      <div class="step"><b>Раскрываем:</b> x + 5 − x − 1 = 4.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">4</span><span class="d">x − 2</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 9. ПЕРЕХОД К РАЗНЫМ ЗНАМЕНАТЕЛЯМ ==================== -->
+<section class="slide">
+  <span class="slide-num">9</span>
+  <span class="topic-badge">ПРАВИЛО 2</span>
+  <h2>🎯 Если знаменатели разные</h2>
+  <div class="card card-left">
+    <p>Порядок действий:</p>
+    <div class="steps">
+      <div class="step">Разложи каждый знаменатель на множители.</div>
+      <div class="step">Найди <b>общий знаменатель</b> — наименьший общий (НОК).</div>
+      <div class="step">Найди <b>дополнительный множитель</b> для каждой дроби.</div>
+      <div class="step">Умножь числитель и знаменатель каждой дроби на её дополнительный множитель.</div>
+      <div class="step">Сложи или вычти числители, знаменатель оставь общим.</div>
+    </div>
+  </div>
+  <div class="info">📌 Наименьший общий знаменатель (НОЗ) — это произведение всех различных множителей в наибольшей степени.</div>
+</section>
+
+<!-- ==================== 10. КАК НАЙТИ ОБЩИЙ ЗНАМЕНАТЕЛЬ ==================== -->
+<section class="slide">
+  <span class="slide-num">10</span>
+  <span class="topic-badge">АЛГОРИТМ НОЗ</span>
+  <h2>🔧 Как найти общий знаменатель</h2>
+  <div class="card card-left">
+    <h3>Пример</h3>
+    <p style="margin-top:6px;">Знаменатели: (x − 2) и (x + 3)</p>
+    <p style="margin-top:6px;">Разных множителей нет — общий знаменатель = (x − 2)(x + 3).</p>
+  </div>
+  <div class="card card-left">
+    <h3>Второй пример</h3>
+    <p style="margin-top:6px;">Знаменатели: x и x²</p>
+    <p style="margin-top:6px;">Общий знаменатель = x² (множитель x берём в наибольшей степени).</p>
+  </div>
+  <div class="card card-left">
+    <h3>Третий пример</h3>
+    <p style="margin-top:6px;">Знаменатели: (x − 1)(x + 1) и (x + 1)</p>
+    <p style="margin-top:6px;">Общий = (x − 1)(x + 1). Он уже включает второй знаменатель.</p>
+  </div>
+  <div class="tip">💡 Не всегда нужно перемножать знаменатели целиком — иногда один уже содержится в другом.</div>
+</section>
+
+<!-- ==================== 11. ПРИМЕР 4 - ПРОСТЫЕ РАЗНЫЕ ЗНАМЕНАТЕЛИ ==================== -->
+<section class="slide">
+  <span class="slide-num">11</span>
+  <span class="topic-badge">ЛЁГКИЙ УРОВЕНЬ</span>
+  <h2>🌸 Пример 4: буквы в знаменателях</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(17px,2vw,24px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x</span></span>
+      +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">y</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Общий знаменатель:</b> xy.</div>
+      <div class="step"><b>Доп. множитель для первой дроби:</b> y. Получаем <span class="fr"><span class="n">y</span><span class="d">xy</span></span>.</div>
+      <div class="step"><b>Доп. множитель для второй:</b> x. Получаем <span class="fr"><span class="n">x</span><span class="d">xy</span></span>.</div>
+      <div class="step"><b>Складываем:</b>
+        <span class="fr"><span class="n">y + x</span><span class="d">xy</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">💡 ОДЗ: x ≠ 0, y ≠ 0.</div>
+</section>
+
+<!-- ==================== 12. ПРИМЕР 5 - ЧИСЛО И БУКВА ==================== -->
+<section class="slide">
+  <span class="slide-num">12</span>
+  <span class="topic-badge">ЛЁГКИЙ УРОВЕНЬ</span>
+  <h2>🌸 Пример 5: число + дробь</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(17px,2vw,24px);">
+      Вычислить:&nbsp;
+      1 +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Представим единицу как дробь:</b>
+        <span class="fr"><span class="n">x</span><span class="d">x</span></span>
+      </div>
+      <div class="step"><b>Общий знаменатель:</b> x.</div>
+      <div class="step"><b>Складываем:</b>
+        <span class="fr"><span class="n">x + 1</span><span class="d">x</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="warn">⚠️ Любое число можно записать дробью: 1 = <span class="fr"><span class="n">x</span><span class="d">x</span></span>, 5 = <span class="fr"><span class="n">5x</span><span class="d">x</span></span> и так далее. Но не забудь: x ≠ 0.</div>
+</section>
+
+<!-- ==================== 13. ПРИМЕР 6 - ПРОСТЫЕ МНОГОЧЛЕНЫ ==================== -->
+<section class="slide">
+  <span class="slide-num">13</span>
+  <span class="topic-badge">СРЕДНИЙ УРОВЕНЬ</span>
+  <h2>🌺 Пример 6: два разных знаменателя</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(16px,1.9vw,23px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x − 1</span></span>
+      +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x + 1</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Общий знаменатель:</b> (x − 1)(x + 1).</div>
+      <div class="step"><b>Первая дробь:</b> домножаем на (x + 1):
+        <span class="fr"><span class="n">x + 1</span><span class="d">(x − 1)(x + 1)</span></span>
+      </div>
+      <div class="step"><b>Вторая дробь:</b> домножаем на (x − 1):
+        <span class="fr"><span class="n">x − 1</span><span class="d">(x − 1)(x + 1)</span></span>
+      </div>
+      <div class="step"><b>Складываем числители:</b> (x + 1) + (x − 1) = 2x.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">2x</span><span class="d">(x − 1)(x + 1)</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 14. ПРИМЕР 7 - С РАЗЛОЖЕНИЕМ ==================== -->
+<section class="slide">
+  <span class="slide-num">14</span>
+  <span class="topic-badge">СРЕДНИЙ УРОВЕНЬ</span>
+  <h2>🌺 Пример 7: разложить знаменатель</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(16px,1.9vw,23px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x² − 4</span></span>
+      +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x + 2</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Разложим первый знаменатель:</b> x² − 4 = (x − 2)(x + 2).</div>
+      <div class="step"><b>Второй знаменатель:</b> x + 2 уже содержится в первом!</div>
+      <div class="step"><b>Общий знаменатель:</b> (x − 2)(x + 2).</div>
+      <div class="step"><b>Доп. множитель для второй дроби:</b> (x − 2).</div>
+      <div class="step"><b>Числитель:</b> 1 + (x − 2) = x − 1.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">x − 1</span><span class="d">(x − 2)(x + 2)</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">💡 Всегда сначала раскладывай знаменатели на множители — тогда видно, что уже совпадает.</div>
+</section>
+
+<!-- ==================== 15. ПРИМЕР 8 - ВЫЧИТАНИЕ С РАЗЛОЖЕНИЕМ ==================== -->
+<section class="slide">
+  <span class="slide-num">15</span>
+  <span class="topic-badge">СЛОЖНЫЙ УРОВЕНЬ</span>
+  <h2>🌷 Пример 8: вычитание с разложением</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(15px,1.8vw,22px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">3</span><span class="d">x² − 9</span></span>
+      −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x − 3</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Разложим первый знаменатель:</b> x² − 9 = (x − 3)(x + 3).</div>
+      <div class="step"><b>Второй знаменатель (x − 3)</b> уже содержится в первом.</div>
+      <div class="step"><b>Общий знаменатель:</b> (x − 3)(x + 3).</div>
+      <div class="step"><b>Доп. множитель для второй дроби:</b> (x + 3).</div>
+      <div class="step"><b>Числитель:</b> 3 − (x + 3) = 3 − x − 3 = −x.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">−x</span><span class="d">(x − 3)(x + 3)</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="warn">⚠️ Не забудь про скобки: −(x + 3), а не −x + 3.</div>
+</section>
+
+<!-- ==================== 16. ПРИМЕР 9 - СЛОЖНЕЕ ==================== -->
+<section class="slide">
+  <span class="slide-num">16</span>
+  <span class="topic-badge">СЛОЖНЫЙ УРОВЕНЬ</span>
+  <h2>🌷 Пример 9: два разных разложения</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(15px,1.8vw,22px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">x</span><span class="d">x² − 4</span></span>
+      −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x² + 4x + 4</span></span>
+    </p>
+    <div class="steps">
+      <div class="step"><b>Первый знаменатель:</b> x² − 4 = (x − 2)(x + 2).</div>
+      <div class="step"><b>Второй знаменатель:</b> x² + 4x + 4 = (x + 2)².</div>
+      <div class="step"><b>Общий знаменатель:</b> (x − 2)(x + 2)². Берём (x + 2) в наибольшей степени.</div>
+      <div class="step"><b>Доп. множитель первой дроби:</b> (x + 2). Числитель: x(x + 2).</div>
+      <div class="step"><b>Доп. множитель второй дроби:</b> (x − 2). Числитель: 1·(x − 2).</div>
+      <div class="step"><b>Разность числителей:</b> x(x + 2) − (x − 2) = x² + 2x − x + 2 = x² + x + 2.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">x² + x + 2</span><span class="d">(x − 2)(x + 2)²</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 17. ПРИМЕР 10 - ПРОТИВОПОЛОЖНЫЕ ЗНАМЕНАТЕЛИ ==================== -->
+<section class="slide">
+  <span class="slide-num">17</span>
+  <span class="topic-badge">ОСОБЫЙ СЛУЧАЙ</span>
+  <h2>🌷 Пример 10: противоположные знаменатели</h2>
+  <div class="card card-left">
+    <p style="text-align:center; margin-bottom:10px; font-size:clamp(15px,1.8vw,22px);">
+      Вычислить:&nbsp;
+      <span class="fr fr-big"><span class="n">5</span><span class="d">a − b</span></span>
+      +
+      <span class="fr fr-big"><span class="n">3</span><span class="d">b − a</span></span>
+    </p>
+    <div class="info" style="margin-top:6px;">📌 Заметь: (b − a) = −(a − b).</div>
+    <div class="steps">
+      <div class="step"><b>Перепишем вторую дробь:</b>
+        <span class="fr"><span class="n">3</span><span class="d">b − a</span></span>
+        =
+        <span class="fr"><span class="n">−3</span><span class="d">a − b</span></span>
+      </div>
+      <div class="step"><b>Теперь знаменатели одинаковые.</b></div>
+      <div class="step"><b>Складываем числители:</b> 5 + (−3) = 2.</div>
+      <div class="step"><b>Ответ:</b>
+        <span class="fr"><span class="n">2</span><span class="d">a − b</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">💡 Если знаменатели отличаются только знаком, вынеси минус за дробь — знаменатели станут одинаковыми.</div>
+</section>
+
+<!-- ==================== 18. ПРАКТИКА УРОВЕНЬ 1 ==================== -->
+<section class="slide">
+  <span class="slide-num">18</span>
+  <span class="topic-badge">ПРАКТИКА · ЛЁГКАЯ</span>
+  <h2>💪 Реши сам — уровень 1</h2>
+  <div style="width:min(840px,94vw);">
+    <div class="task">1) <span class="fr fr-big"><span class="n">2x</span><span class="d">x + 5</span></span> +
+      <span class="fr fr-big"><span class="n">3x</span><span class="d">x + 5</span></span></div>
+    <div class="task">2) <span class="fr fr-big"><span class="n">7a</span><span class="d">a − 2</span></span> −
+      <span class="fr fr-big"><span class="n">5a</span><span class="d">a − 2</span></span></div>
+    <div class="task">3) <span class="fr fr-big"><span class="n">1</span><span class="d">x</span></span> +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">2x</span></span></div>
+    <div class="task">4) <span class="fr fr-big"><span class="n">3</span><span class="d">a</span></span> −
+      <span class="fr fr-big"><span class="n">2</span><span class="d">b</span></span></div>
+    <div class="task">5) 1 + <span class="fr fr-big"><span class="n">1</span><span class="d">x</span></span></div>
+    <div class="task">6) <span class="fr fr-big"><span class="n">x</span><span class="d">3</span></span> +
+      <span class="fr fr-big"><span class="n">x</span><span class="d">4</span></span></div>
+  </div>
+  <button class="ans-btn" onclick="this.nextElementSibling.classList.toggle('open')">👀 Показать ответы</button>
+  <div class="answers">
+    1) <span class="fr"><span class="n">5x</span><span class="d">x + 5</span></span><br>
+    2) <span class="fr"><span class="n">2a</span><span class="d">a − 2</span></span><br>
+    3) <span class="fr"><span class="n">3</span><span class="d">2x</span></span><br>
+    4) <span class="fr"><span class="n">3b − 2a</span><span class="d">ab</span></span><br>
+    5) <span class="fr"><span class="n">x + 1</span><span class="d">x</span></span><br>
+    6) <span class="fr"><span class="n">7x</span><span class="d">12</span></span>
+  </div>
+</section>
+
+<!-- ==================== 19. ПРАКТИКА УРОВЕНЬ 2 ==================== -->
+<section class="slide">
+  <span class="slide-num">19</span>
+  <span class="topic-badge">ПРАКТИКА · СРЕДНЯЯ</span>
+  <h2>💪 Реши сам — уровень 2</h2>
+  <div style="width:min(840px,94vw);">
+    <div class="task">1) <span class="fr fr-big"><span class="n">x + 3</span><span class="d">x − 1</span></span> −
+      <span class="fr fr-big"><span class="n">x − 2</span><span class="d">x − 1</span></span></div>
+    <div class="task">2) <span class="fr fr-big"><span class="n">1</span><span class="d">a + 3</span></span> +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">a − 3</span></span></div>
+    <div class="task">3) <span class="fr fr-big"><span class="n">2</span><span class="d">x² − 1</span></span> +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x + 1</span></span></div>
+    <div class="task">4) <span class="fr fr-big"><span class="n">5</span><span class="d">m − n</span></span> +
+      <span class="fr fr-big"><span class="n">3</span><span class="d">n − m</span></span></div>
+    <div class="task">5) <span class="fr fr-big"><span class="n">a</span><span class="d">a + 2</span></span> −
+      <span class="fr fr-big"><span class="n">a</span><span class="d">a − 2</span></span></div>
+    <div class="task">6) 1 − <span class="fr fr-big"><span class="n">1</span><span class="d">x − 1</span></span></div>
+  </div>
+  <button class="ans-btn" onclick="this.nextElementSibling.classList.toggle('open')">👀 Показать ответы</button>
+  <div class="answers">
+    1) <span class="fr"><span class="n">5</span><span class="d">x − 1</span></span><br>
+    2) <span class="fr"><span class="n">2a</span><span class="d">(a + 3)(a − 3)</span></span><br>
+    3) <span class="fr"><span class="n">x + 3</span><span class="d">(x − 1)(x + 1)</span></span><br>
+    4) <span class="fr"><span class="n">2</span><span class="d">m − n</span></span><br>
+    5) <span class="fr"><span class="n">−4a</span><span class="d">(a + 2)(a − 2)</span></span><br>
+    6) <span class="fr"><span class="n">x − 2</span><span class="d">x − 1</span></span>
+  </div>
+</section>
+
+<!-- ==================== 20. ПРАКТИКА УРОВЕНЬ 3 ==================== -->
+<section class="slide">
+  <span class="slide-num">20</span>
+  <span class="topic-badge">ПРАКТИКА · СЛОЖНАЯ</span>
+  <h2>🔥 Реши сам — уровень 3</h2>
+  <div style="width:min(880px,94vw);">
+    <div class="task task-hard">1) <span class="fr fr-big"><span class="n">x</span><span class="d">x² − 4</span></span> −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x² + 4x + 4</span></span></div>
+    <div class="task task-hard">2) <span class="fr fr-big"><span class="n">3</span><span class="d">x² − 9</span></span> −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x − 3</span></span></div>
+    <div class="task task-hard">3) <span class="fr fr-big"><span class="n">a + 2</span><span class="d">a² + 2a</span></span> −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">a</span></span></div>
+  </div>
+  <button class="ans-btn" onclick="this.nextElementSibling.classList.toggle('open')">👀 Показать решения</button>
+  <div class="answers">
+    <b class="cyan">1.</b> x² − 4 = (x − 2)(x + 2); x² + 4x + 4 = (x + 2)².<br>
+    Общий знаменатель: (x − 2)(x + 2)².<br>
+    Числитель: x(x + 2) − (x − 2) = x² + 2x − x + 2 = x² + x + 2.<br>
+    Ответ: <span class="fr"><span class="n">x² + x + 2</span><span class="d">(x − 2)(x + 2)²</span></span><br><br>
+    <b class="cyan">2.</b> x² − 9 = (x − 3)(x + 3).<br>
+    Числитель: 3 − (x + 3) = −x.<br>
+    Ответ: <span class="fr"><span class="n">−x</span><span class="d">(x − 3)(x + 3)</span></span><br><br>
+    <b class="cyan">3.</b> a² + 2a = a(a + 2).<br>
+    Числитель: (a + 2) − (a + 2) = 0.<br>
+    Ответ: <b>0</b> — при условии a ≠ 0, a ≠ −2.
+  </div>
+</section>
+
+<!-- ==================== 21. ТИПИЧНЫЕ ОШИБКИ ==================== -->
+<section class="slide">
+  <span class="slide-num">21</span>
+  <span class="topic-badge">ОШИБКИ</span>
+  <h2>💡 Четыре ошибки, которых нужно избегать</h2>
+  <div class="card card-left">
+    <p><b class="pink">Ошибка 1.</b> Складывать знаменатели.</p>
+    <p style="text-align:center; margin-top:6px;">
+      ❌ <span class="fr"><span class="n">a</span><span class="d">b</span></span> +
+      <span class="fr"><span class="n">c</span><span class="d">d</span></span> ≠
+      <span class="fr"><span class="n">a + c</span><span class="d">b + d</span></span>
+    </p>
+  </div>
+  <div class="card card-left">
+    <p><b class="pink">Ошибка 2.</b> Не ставить скобки при вычитании.</p>
+    <p style="text-align:center; margin-top:6px;">
+      ❌ x − (a − b) → <span class="strike">x − a − b</span> · ✅ x − a + b
+    </p>
+  </div>
+  <div class="card card-left">
+    <p><b class="pink">Ошибка 3.</b> Сократить слагаемые вместо множителей.</p>
+    <p style="text-align:center; margin-top:6px;">
+      ❌ <span class="fr"><span class="n">x + 3</span><span class="d">3</span></span> ≠ x
+    </p>
+  </div>
+  <div class="card card-left">
+    <p><b class="pink">Ошибка 4.</b> Забыть про ОДЗ. Пиши «x ≠ …» сразу.</p>
+  </div>
+</section>
+
+<!-- ==================== 22. САМОСТОЯТЕЛЬНАЯ РАБОТА ==================== -->
+<section class="slide">
+  <span class="slide-num">22</span>
+  <span class="topic-badge">САМОСТОЯТЕЛЬНАЯ РАБОТА</span>
+  <h2>✏️ Проверь себя</h2>
+  <div style="width:min(880px,94vw);">
+    <div class="task">1) <span class="fr fr-big"><span class="n">4x</span><span class="d">x + 1</span></span> +
+      <span class="fr fr-big"><span class="n">2x</span><span class="d">x + 1</span></span></div>
+    <div class="task">2) <span class="fr fr-big"><span class="n">1</span><span class="d">a</span></span> +
+      <span class="fr fr-big"><span class="n">1</span><span class="d">b</span></span></div>
+    <div class="task">3) <span class="fr fr-big"><span class="n">x + 2</span><span class="d">x − 3</span></span> −
+      <span class="fr fr-big"><span class="n">x − 1</span><span class="d">x − 3</span></span></div>
+    <div class="task">4) <span class="fr fr-big"><span class="n">2</span><span class="d">x − 2</span></span> +
+      <span class="fr fr-big"><span class="n">3</span><span class="d">x + 2</span></span></div>
+    <div class="task task-hard">5) <span class="fr fr-big"><span class="n">1</span><span class="d">x² − 9</span></span> −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">x − 3</span></span></div>
+    <div class="task task-hard">6) <span class="fr fr-big"><span class="n">m</span><span class="d">m² − n²</span></span> −
+      <span class="fr fr-big"><span class="n">1</span><span class="d">m + n</span></span></div>
+  </div>
+  <div class="tip">💡 Реши на листочке. Не спеши. Сверь с ответами из предыдущих задач.</div>
+</section>
+
+<!-- ==================== 23. ИТОГИ ==================== -->
+<section class="slide">
+  <span class="slide-num">23</span>
+  <span class="emoji-big">🌟</span>
+  <h2>Что мы сегодня освоили</h2>
+  <div class="card card-left">
+    <ul>
+      <li>Сложение и вычитание дробей с одинаковым знаменателем</li>
+      <li>Правило скобок при вычитании</li>
+      <li>Как найти общий знаменатель через разложение на множители</li>
+      <li>Как найти дополнительный множитель для каждой дроби</li>
+      <li>Особый случай с противоположными знаменателями</li>
+      <li>Типичные ошибки и как их избежать</li>
+    </ul>
+  </div>
+  <p style="margin-top:16px; font-size:clamp(17px,2.1vw,25px);">Отличная работа! 💪 Теперь любые дроби можно складывать и вычитать.</p>
+  <div style="margin-top:20px;">
+    <span class="badge">простые ✅</span>
+    <span class="badge">средние ✅</span>
+    <span class="badge">сложные ✅</span>
+  </div>
+</section>
+
+<!-- НАВИГАЦИЯ -->
+<div class="nav">
+  <button onclick="go(cur-1)" aria-label="назад">←</button>
+  <span id="counter">1 / 23</span>
+  <button onclick="go(cur+1)" aria-label="вперёд">→</button>
+</div>
+<div class="hint">← → / пробел — листать · свайп на телефоне</div>
+<div class="bar-wrap"><div id="bar"></div></div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let cur = 0;
+  function go(i){
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s,j)=>s.classList.toggle('active', j===cur));
+    document.getElementById('counter').textContent = (cur+1) + ' / ' + slides.length;
+    document.getElementById('bar').style.width = ((cur+1)/slides.length*100) + '%';
+    document.querySelector('.slide.active').scrollTop = 0;
+  }
+  document.addEventListener('keydown', e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown','Enter'].includes(e.key)) go(cur+1);
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) go(cur-1);
+    if(e.key==='Home') go(0);
+    if(e.key==='End') go(slides.length-1);
+  });
+  let tx=0, ty=0;
+  document.addEventListener('touchstart', e=>{ tx=e.touches[0].clientX; ty=e.touches[0].clientY; }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)){ dx<0 ? go(cur+1) : go(cur-1); }
+  }, {passive:true});
+  go(0);
+</script>
+</body>
+</html>
